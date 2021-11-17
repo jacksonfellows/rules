@@ -17,6 +17,7 @@ data Expr' = Add Expr' Expr'
            | Num' Rational
            | Var' String
            | Rule' Expr' Expr'
+           | Replace' Expr' Expr'
            deriving Show
 
 convertExpr' :: Expr' -> Expr
@@ -29,6 +30,7 @@ convertExpr' (Minus a) = Sum [(convertExpr' a,-1)]
 convertExpr' (Num' n) = Num n
 convertExpr' (Var' v) = Var v
 convertExpr' (Rule' a b) = Rule (convertExpr' a) (convertExpr' b)
+convertExpr' (Replace' a b) = Replace (convertExpr' a) (convertExpr' b)
 
 num' :: Parser Expr'
 num' = Num' . toRational <$> number
@@ -79,11 +81,21 @@ rule = do
   b <- expr'
   return $ Rule' a b
 
+replace :: Parser Expr'
+replace = do
+  a <- expr''
+  _ <- reserved "/."
+  b <- expr''
+  return $ Replace' a b
+
 expr'' :: Parser Expr'
-expr'' = rule <|> expr'
+expr'' = rule <|> expr' <|> parens expr''
+
+expr''' :: Parser Expr'
+expr''' = replace <|> expr'' <|> parens expr'''
 
 parseExpr' :: String -> Either String Expr'
-parseExpr' = runParser expr''
+parseExpr' = runParser expr'''
 
 parseExpr :: String -> Either String Expr
 parseExpr s = convertExpr' <$> parseExpr' s

@@ -16,6 +16,7 @@ data Expr = Num Rational
           | Product [(Expr,Rational)]
           | Expt Expr Expr
           | Rule Expr Expr
+          | Replace Expr Expr
           deriving (Show,Eq,Ord)
 
 isNum :: Expr -> Bool
@@ -39,6 +40,7 @@ sortExpr (Sum xs) = Sum $ sort $ map (first sortExpr) xs
 sortExpr (Product xs) = Product $ sort $ map (first sortExpr) xs
 sortExpr (Expt a b) = Expt (sortExpr a) (sortExpr b)
 sortExpr (Rule a b) = Rule (sortExpr a) (sortExpr b)
+sortExpr (Replace a b) = Replace (sortExpr a) (sortExpr b)
 sortExpr e@(Var _) = e
 sortExpr e@(Num _) = e
 
@@ -53,6 +55,7 @@ collectLikeTerms (Sum xs) = Sum $ addCoefsAdjLikeTerms $ map (first collectLikeT
 collectLikeTerms (Product xs) = Product $ addCoefsAdjLikeTerms $ map (first collectLikeTerms) xs
 collectLikeTerms (Expt a b) = Expt (collectLikeTerms a) (collectLikeTerms b)
 collectLikeTerms (Rule a b) = Rule (collectLikeTerms a) (collectLikeTerms b)
+collectLikeTerms (Replace a b) = Replace (collectLikeTerms a) (collectLikeTerms b)
 collectLikeTerms e@(Var _) = e
 collectLikeTerms e@(Num _) = e
 
@@ -89,6 +92,7 @@ foldConstants (Expt a b) = case a' of
   where a' = foldConstants a
         b' = foldConstants b
 foldConstants (Rule a b) = Rule (foldConstants a) (foldConstants b)
+foldConstants (Replace a b) = Replace (foldConstants a) (foldConstants b)
 foldConstants e@(Var _) = e
 foldConstants e@(Num _) = e
 
@@ -108,6 +112,7 @@ stripIdentities (Expt a b)
   where a' = stripIdentities a
         b' = stripIdentities b
 stripIdentities (Rule a b) = Rule (stripIdentities a) (stripIdentities b)
+stripIdentities (Replace a b) = Replace (stripIdentities a) (stripIdentities b)
 stripIdentities e@(Var _) = e
 stripIdentities e@(Num _) = e
 
@@ -118,6 +123,7 @@ flatten (Product xs) = Product $ (concatMap (\((Product xs'),c) -> map (\(x,c') 
   where (products,rest) = partition (isProduct . fst) $ map (first flatten) xs
 flatten (Expt a b) = Expt (flatten a) (flatten b)
 flatten (Rule a b) = Rule (flatten a) (flatten b)
+flatten (Replace a b) = Replace (flatten a) (flatten b)
 flatten e@(Var _) = e
 flatten e@(Num _) = e
 
@@ -131,6 +137,7 @@ flattenProductsInSums (Sum xs) = Sum $ map flattenProduct $ map (first flattenPr
 flattenProductsInSums (Product xs) = Sum $ [flattenProduct (Product $ map (first flattenProductsInSums) xs,1)]
 flattenProductsInSums (Expt a b) = Expt (flattenProductsInSums a) (flattenProductsInSums b)
 flattenProductsInSums (Rule a b) = Rule (flattenProductsInSums a) (flattenProductsInSums b)
+flattenProductsInSums (Replace a b) = Replace (flattenProductsInSums a) (flattenProductsInSums b)
 flattenProductsInSums e@(Var _) = e
 flattenProductsInSums e@(Num _) = e
 
@@ -143,6 +150,7 @@ flattenSumsInProducts (Product xs) = Product $ map expandSum $ map (first flatte
 flattenSumsInProducts (Sum xs) = Sum $ map (first flattenSumsInProducts) xs
 flattenSumsInProducts (Expt a b) = Expt (flattenSumsInProducts a) (flattenSumsInProducts b)
 flattenSumsInProducts (Rule a b) = Rule (flattenSumsInProducts a) (flattenSumsInProducts b)
+flattenSumsInProducts (Replace a b) = Replace (flattenSumsInProducts a) (flattenSumsInProducts b)
 flattenSumsInProducts e@(Var _) = e
 flattenSumsInProducts e@(Num _) = e
 
@@ -155,6 +163,7 @@ flattenExpts (Expt a b) = case b' of
   where a' = flattenExpts a
         b' = flattenExpts b
 flattenExpts (Rule a b) = Rule (flattenExpts a) (flattenExpts b)
+flattenExpts (Replace a b) = Replace (flattenExpts a) (flattenExpts b)
 flattenExpts e@(Var _) = e
 flattenExpts e@(Num _) = e
 
