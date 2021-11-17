@@ -8,12 +8,12 @@ import Data.Char
 
 newtype Parser a = Parser { parse :: String -> [(a,String)] }
 
-runParser :: Parser a -> String -> a
+runParser :: Parser a -> String -> Either String a
 runParser m s =
   case parse m s of
-    [(res, [])] -> res
-    [(_, _)]   -> error "Parser did not consume entire stream."
-    _           -> error "Parser error."
+    [(res, [])] -> Right res
+    [(_, _)]    -> Left "Parser did not consume entire stream."
+    _           -> Left "Parser error."
 
 item :: Parser Char
 item = Parser $ \s ->

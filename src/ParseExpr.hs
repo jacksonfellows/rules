@@ -82,8 +82,8 @@ rule = do
 expr'' :: Parser Expr'
 expr'' = rule <|> expr'
 
-parseExpr' :: String -> Expr'
+parseExpr' :: String -> Either String Expr'
 parseExpr' = runParser expr''
 
-parseExpr :: String -> Expr
-parseExpr = convertExpr' . parseExpr'
+parseExpr :: String -> Either String Expr
+parseExpr s = convertExpr' <$> parseExpr' s

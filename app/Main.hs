@@ -13,4 +13,7 @@ read' = putStr "> " >> hFlush stdout >> getLine
 main :: IO ()
 main = forever $ do
   input <- read'
-  putStrLn $ printExpr $ fullSimplify $ parseExpr $ input
+  case parseExpr input of
+    Right expr -> putStrLn $ printExpr $ fullSimplify expr
+    Left err -> putStrLn err
+
