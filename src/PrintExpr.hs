@@ -43,4 +43,4 @@ printExpr (Product xs)
 printExpr (Expt a b) = (printExpr a) `wrapIf` (isSum a || isProduct a) ++ "^" ++ (printExpr b) `wrapIf` (isSum b || isProduct b || isExpt b)
 printExpr (Num n) = printRat n
 printExpr (Var v) = v
-printExpr (Rule a b) = printExpr a ++ "->" ++ printExpr b
+printExpr (Rule a b) = printExpr a ++ " -> " ++ printExpr b
